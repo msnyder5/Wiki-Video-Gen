@@ -10,7 +10,7 @@ from wiki2vid.scripter.script import Script
 from wiki2vid.state import State
 
 
-class Outliner:
+class Outline:
     def __init__(self, state: State):
         self.wiki = state.wiki
 
@@ -33,5 +33,5 @@ class Outliner:
         return AI.infer(messages, "outline.md")
 
     @lru_cache
-    def outline(self) -> Script:
+    def empty_script(self) -> Script:
         return Script.from_markdown(self._raw_outline())

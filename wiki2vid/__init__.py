@@ -1,5 +1,5 @@
-from wiki2vid.scripter import Scripter
-from wiki2vid.scripter.outliner import Script
+from wiki2vid.scripter import ScriptHandler
+from wiki2vid.scripter.outline import Script
 from wiki2vid.state import State
 from wiki2vid.video import VideoGenerator
 
@@ -9,7 +9,7 @@ class Wiki2Vid:
         self.state = State(wiki_url)
 
     def get_script(self) -> Script:
-        scripter = Scripter(self.state)
+        scripter = ScriptHandler(self.state)
         return scripter.create_script()
 
     def create_video(self):
