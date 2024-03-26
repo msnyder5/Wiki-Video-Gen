@@ -2,7 +2,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from wiki2vid.ai import AI
 from wiki2vid.config import Config
-from wiki2vid.script.script import ScriptNode
+from wiki2vid.script.script import Script, ScriptNode
 from wiki2vid.state import State
 
 
@@ -10,7 +10,7 @@ class ScriptBuilder:
     def __init__(self, state: State):
         self.state = state
 
-    def create_script(self) -> ScriptNode:
+    def create_script(self) -> Script:
         self._brainstorm()
         self._write_outline()
         self._write_sections()
@@ -32,7 +32,7 @@ class ScriptBuilder:
             AIMessage(content=self.state.brainstorm, name="Brainstorming Results"),
         ]
         response = AI.infer(messages, "outline.md")
-        self.state.script.update_from_outline_markdown(response)
+        self.state.script.root.update_from_outline_markdown(response)
 
     def _write_sections(self) -> None:
         def _write_section(section: ScriptNode) -> None:
@@ -69,7 +69,7 @@ class ScriptBuilder:
                 ]
             section.content = AI.infer(messages, section.filepath)
 
-        for section in self.state.script.children:
+        for section in self.state.script.root.children:
             _write_section(section)
 
     # Only meant to be called on root node
@@ -98,5 +98,5 @@ class ScriptBuilder:
             response = AI.infer(messages, section.filepath)
             section.update_from_script_markdown(response)
 
-        for section in self.state.script.children:
+        for section in self.state.script.root.children:
             _revise_section(section)

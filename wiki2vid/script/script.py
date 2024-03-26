@@ -109,8 +109,8 @@ class ScriptNode:
 
 
 class Script:
-    def __init__(self, root: ScriptNode):
-        self.root = root
+    def __init__(self, root: Optional[ScriptNode] = None):
+        self.root = root or ScriptNode("Outline")
 
     def __str__(self) -> str:
         return "".join(str(child) for child in self.root.children)
