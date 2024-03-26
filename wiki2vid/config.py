@@ -102,6 +102,10 @@ You will be given a Wiki article to use as a reference, and your goal is to crea
 I have already created an outline for the script, and now it's your turn to write the content for each section. \
 You will be provided with the outline for a given section, and your task is to write the script content for that section based on the Wiki article.
 
+Your script should not be in markdown format, but rather in plain text sentences/paragraphs. \
+Do not include any editing instructions or formatting in your response, as this will be handled by the editor. \
+Only reply with the script content for the section you are working on, nothing else.
+
 """.strip()
 SECTION_WRITE_WITH_CHILDREN = f"""
 
