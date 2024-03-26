@@ -1,1 +1,1 @@
-from wiki2vid.script.handler import Script, ScriptHandler
+from wiki2vid.script.builder import ScriptBuilder, ScriptNode

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional
 
 from markdown_it import MarkdownIt
@@ -7,97 +8,109 @@ from markdown_it import MarkdownIt
 from wiki2vid.config import Config
 
 
-class Script:
+class MDType(Enum):
+    OUTLINE = 1
+    SECTION = 2
+
+
+class ScriptNode:
     def __init__(
         self,
         title: str,
-        *,
-        pre_filepath: Optional[str] = None,
         description: str = "",
-        children: Optional[List[Script]] = None,
-        script: str = "",
-        level: int = 1,
+        content: str = "",
+        children: Optional[List[ScriptNode]] = None,
+        level: int = 0,
+        parent_filepath: str = Config.folder,
     ):
-        self.title = title
-        self.filepath = (
-            f"{Config.folder}/{pre_filepath}/{title}.md"
-            if pre_filepath
-            else f"{Config.folder}/{title}.md"
-        )
-        self.description = description
-        self.children = children or []
-        self.script = script
+        self.title: str = title
+        self.description: str = description
+        self.content: str = content
+        self.children: List[ScriptNode] = children or []
         self.level = level
+        self.filepath: str = f"{parent_filepath}/{title}.md"
+
+    def update_from_outline_markdown(self, outline: str) -> None:
+        self._update_from_markdown(outline, type=MDType.OUTLINE)
+
+    def update_from_script_markdown(self, script: str) -> None:
+        self._update_from_markdown(script, type=MDType.SECTION)
+
+    def _update_from_markdown(self, markdown: str, type: MDType) -> None:
+        md = MarkdownIt()
+        tokens = md.parse(markdown)
+        stack: List[ScriptNode] = [self]
+        for i, token in enumerate(tokens):
+            if token.type == "heading_open":
+                level = int(token.tag[-1])
+                while len(stack) > (level - self.level):
+                    stack.pop()
+            elif token.type == "inline":
+                if tokens[i - 1].type == "heading_open":
+                    title = token.content
+                    node = self._find_or_create_child(title)
+                    stack[-1].children.append(node)
+                    stack.append(node)
+                else:
+                    if type == MDType.OUTLINE:
+                        stack[-1].description += token.content + "\n"
+                        stack[-1].description = stack[-1].description
+                    elif type == MDType.SECTION:
+                        stack[-1].content += token.content + "\n"
+                        stack[-1].content = stack[-1].content
+
+        self._strip_content()
+
+    def _find_or_create_child(self, title: str) -> ScriptNode:
+        for child in self.children:
+            if child.title == title:
+                return child
+        new_child = ScriptNode(
+            title, parent_filepath=self.filepath, level=self.level + 1
+        )
+        self.children.append(new_child)
+        return new_child
+
+    def _strip_content(self):
+        self.description = self.description.strip()
+        for child in self.children:
+            child._strip_content()
 
     @property
-    def outline_spec(self) -> str:
+    def outline_info(self) -> str:
         return f"{'#'*self.level} {self.title}\n\n{self.description}"
 
     @property
-    def partial_script(self) -> str:
-        return f"{'#'*self.level} {self.title}\n\n{self.script}"
+    def self_script(self) -> str:
+        return f"{'#'*self.level} {self.title}\n\n{self.content}"
 
     @property
     def children_script(self) -> str:
-        return "\n\n".join(child.partial_script for child in self.children)
+        return "\n\n".join(child.self_script for child in self.children)
 
     @property
-    def full_script(self) -> str:
-        ret = self.partial_script
+    def script(self) -> str:
+        ret = self.self_script
         if self.children:
             ret += "\n\n"
             ret += self.children_script
         return ret
 
-    @staticmethod
-    def from_markdown(markdown: str) -> Script:
-        md = MarkdownIt()
-        tokens = md.parse(markdown)
+    def __str__(self) -> str:
+        return self._to_markdown()
 
-        root = Script("Outline")
-        stack = [root]
+    def _to_markdown(self) -> str:
+        markdown = f"{'#' * self.level} {self.title}\n\n"
+        if self.description:
+            markdown += f"{self.description}\n\n"
+        for child in self.children:
+            markdown += child._to_markdown()
+        return markdown
 
-        for i, token in enumerate(tokens):
-            if token.type == "heading_open":
-                level = int(token.tag[-1])  # e.g., h2 -> 2
-                # Close current nodes until reaching the right level in the hierarchy
-                while len(stack) > level:
-                    stack.pop()
 
-            elif token.type == "inline":
-                if tokens[i - 1].type == "heading_open":
-                    # This is a title
-                    title = token.content
-                    pre_filepath = (
-                        "/".join(node.title for node in stack[1:])
-                        if len(stack) > 1
-                        else None
-                    )
-                    new_node = Script(title, pre_filepath=pre_filepath, level=level)
-                    stack[-1].children.append(new_node)
-                    stack.append(new_node)
-                else:
-                    # This is content
-                    stack[-1].description += token.content + "\n"
-                    stack[-1].description = stack[-1].description
-
-        # Ensure that all nodes content is stripped
-        def _strip_content(node: Script):
-            node.description = node.description.strip()
-            for child in node.children:
-                _strip_content(child)
-
-        _strip_content(root)
-
-        return root
+class Script:
+    def __init__(self, root: ScriptNode):
+        self.root = root
 
     def __str__(self) -> str:
-        def _to_markdown(node: Script, level: int) -> str:
-            markdown = f"{'#' * level} {node.title}\n\n"
-            if node.description:
-                markdown += f"{node.description}\n\n"
-            for child in node.children:
-                markdown += _to_markdown(child, level + 1)
-            return markdown
-
-        return "".join(_to_markdown(child, 1) for child in self.children)
+        return "".join(str(child) for child in self.root.children)

@@ -21,7 +21,7 @@ def main():
 def test():
     wiki2vid = Wiki2Vid()
     script = wiki2vid.get_script()
-    print(script.full_script)
+    print(script.script)
 
 
 if __name__ == "__main__":

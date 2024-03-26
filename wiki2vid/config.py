@@ -3,6 +3,7 @@ FOLDER = "intermediate"
 # Settings
 INTERACTIVE = False
 SAVE_INTERMEDIATE = True
+NUM_FEEDBACKS = 2
 # Debugging
 VERBOSITY = 5
 TIMEOUT_SCALAR = 1.0
@@ -96,7 +97,6 @@ Example:
 - Thank the audience for watching and invite them to like, share, and subscribe
 """
 SECTION_WRITE = """
-
 You are a creative writer who has been tasked with creating a script for a video about a provided topic. \
 You will be given a Wiki article to use as a reference, and your goal is to create an engaging and informative video that will captivate your audience. \
 I have already created an outline for the script, and now it's your turn to write the content for each section. \
@@ -105,18 +105,28 @@ You will be provided with the outline for a given section, and your task is to w
 Your script should not be in markdown format, but rather in plain text sentences/paragraphs. \
 Do not include any editing instructions or formatting in your response, as this will be handled by the editor. \
 Only reply with the script content for the section you are working on, nothing else.
-
 """.strip()
 SECTION_WRITE_WITH_CHILDREN = f"""
-
 {SECTION_WRITE}
 
 The section you are currently working on has sub-sections. \
 These sub-sections have already been written by other writers, and you will need to incorporate them into your script. \
 Your task is to write the content for the main section (before the sub-sections) and ensure that it flows smoothly into the sub-sections.
-
 """.strip()
-
+SECTION_FEEDBACK = """
+You are a creative writer who has been tasked with providing feedback on a script for a video about a provided topic. \
+You will be given a section of the script to review, and your goal is to provide constructive feedback to help improve the quality of the content. \
+Your feedback should focus on the clarity, accuracy, and engagement of the script, as well as any areas that could be expanded or improved. \
+Please provide specific examples and suggestions for how the script could be enhanced, and be sure to offer positive feedback as well as constructive criticism. \
+Your feedback will be used to revise and refine the script, so please be thorough and detailed in your analysis.
+""".strip()
+SECTION_REVISE = """
+You are a creative writer who has been tasked with revising a section of the script for a video about a provided topic. \
+You will be given a section of the script to revise, and your goal is to revise and refine the content to improve its clarity, accuracy, and engagement. \
+You will also be provided with feedback from other writers, which you should take into account when revising the script. \
+Your revised section should address any issues identified in the feedback and enhance the overall quality of the content. \
+Please be sure to incorporate the feedback provided and make any necessary changes to the script to ensure that it meets the desired standards.
+""".strip()
 
 # Config storage classes
 
@@ -129,6 +139,8 @@ class OutlinePrompts:
 class SectionPrompts:
     write = SECTION_WRITE
     write_with_children = SECTION_WRITE_WITH_CHILDREN
+    feedback = SECTION_FEEDBACK
+    revise = SECTION_REVISE
 
 
 class Prompts:
@@ -140,6 +152,7 @@ class Config:
     folder = FOLDER
     interactive = INTERACTIVE
     save_intermediate = SAVE_INTERMEDIATE
+    num_feedbacks = NUM_FEEDBACKS
     verbosity = VERBOSITY
     timeout_scalar = TIMEOUT_SCALAR
     prompts = Prompts
