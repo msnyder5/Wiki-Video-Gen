@@ -19,9 +19,10 @@ def main():
 
 
 def test():
-    wiki2vid = Wiki2Vid()
+    wiki2vid = Wiki2Vid("https://apexlegends.fandom.com/wiki/Bloodhound")
     script = wiki2vid.get_script()
-    print(script.script)
+    with open("output.md", "w") as f:
+        f.write(str(script))
 
 
 if __name__ == "__main__":

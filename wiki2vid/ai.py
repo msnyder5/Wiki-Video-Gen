@@ -9,12 +9,14 @@ from wiki2vid.config import Config
 
 
 class AI:
-    chat = ChatOpenAI()
+    chat = ChatOpenAI(model="gpt-4-0125-preview")
 
     @staticmethod
     def infer(messages: List[BaseMessage], filepath: str = "progress.md") -> str:
+        if Config.verbosity >= 1:
+            print(f"infer({filepath})")
         # Debug print
-        if Config.verbosity >= 4:
+        if Config.verbosity >= 6:
             print(
                 "-" * 50,
                 "\n".join(str(message.content) for message in messages),
