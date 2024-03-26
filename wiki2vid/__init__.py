@@ -1,9 +1,7 @@
-from wiki2vid.config import Config
 from wiki2vid.scripter import Scripter
 from wiki2vid.scripter.outliner import Script
 from wiki2vid.state import State
 from wiki2vid.video import VideoGenerator
-from wiki2vid.wiki import Wiki
 
 
 class Wiki2Vid:

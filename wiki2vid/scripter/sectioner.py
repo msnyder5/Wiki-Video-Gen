@@ -1,5 +1,3 @@
-from typing import List
-
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from wiki2vid.ai import AI

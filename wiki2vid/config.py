@@ -1,6 +1,3 @@
-import os
-import random
-
 # Input
 FOLDER = "intermediate"
 # Settings

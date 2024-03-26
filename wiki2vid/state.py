@@ -1,4 +1,3 @@
-from wiki2vid.ai import AI
 from wiki2vid.scripter.script import Script
 from wiki2vid.wiki import Wiki
 

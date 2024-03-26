@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, List, Optional
 
-from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from markdown_it import MarkdownIt
-from markdown_it.token import Token
 
 from wiki2vid.ai import AI
 from wiki2vid.config import Config
