@@ -18,12 +18,18 @@ class Script:
         self,
         title: str,
         *,
+        pre_filepath: Optional[str] = None,
         description: str = "",
         children: Optional[List[Script]] = None,
         script: str = "",
         level: int = 1,
     ):
         self.title = title
+        self.filepath = (
+            f"{Config.folder}/{pre_filepath}/{title}.md"
+            if pre_filepath
+            else f"{Config.folder}/{title}.md"
+        )
         self.description = description
         self.children = children or []
         self.script = script
@@ -68,7 +74,12 @@ class Script:
                 if tokens[i - 1].type == "heading_open":
                     # This is a title
                     title = token.content
-                    new_node = Script(title, level=level)
+                    pre_filepath = (
+                        "/".join(node.title for node in stack[1:])
+                        if len(stack) > 1
+                        else None
+                    )
+                    new_node = Script(title, pre_filepath=pre_filepath, level=level)
                     stack[-1].children.append(new_node)
                     stack.append(new_node)
                 else:

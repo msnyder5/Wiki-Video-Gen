@@ -11,13 +11,12 @@ from markdown_it.token import Token
 from wiki2vid.ai import AI
 from wiki2vid.config import Config
 from wiki2vid.scripter.script import Script
-from wiki2vid.wiki import Wiki
+from wiki2vid.state import State
 
 
 class Outliner:
-    def __init__(self, wiki: Wiki, ai: AI):
-        self.wiki = wiki
-        self.ai = ai
+    def __init__(self, state: State):
+        self.wiki = state.wiki
 
     @lru_cache
     def _brainstorming(self) -> str:
@@ -25,7 +24,7 @@ class Outliner:
             SystemMessage(content=Config.prompts.outline.brainstorm),
             HumanMessage(content=self.wiki.content),
         ]
-        return self.ai.infer(messages, "brainstorming.md")
+        return AI.infer(messages, "brainstorming.md")
 
     @lru_cache
     def _raw_outline(self) -> str:
@@ -35,7 +34,7 @@ class Outliner:
             AIMessage(content=self._brainstorming()),
             SystemMessage(content=Config.prompts.outline.write),
         ]
-        return self.ai.infer(messages, "outline.md")
+        return AI.infer(messages, "outline.md")
 
     @lru_cache
     def outline(self) -> Script:

@@ -1,9 +1,9 @@
-from wiki2vid.scripter import Script
+from wiki2vid.state import State
 
 
 class VideoGenerator:
-    def __init__(self, script: Script):
-        self.script = script
+    def __init__(self, state: State):
+        self.state = state
 
     def generate_video(self):
         pass

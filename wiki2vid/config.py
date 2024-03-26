@@ -2,27 +2,14 @@ import os
 import random
 
 # Input
-
-WIKI_URL = random.choice(
-    [
-        "https://apexlegends.fandom.com/wiki/Fuse",
-        "https://apexlegends.fandom.com/wiki/Bloodhound",
-    ]
-)
 FOLDER = "intermediate"
-
 # Settings
-
 INTERACTIVE = False
 SAVE_INTERMEDIATE = True
-
 # Debugging
-
 VERBOSITY = 5
 TIMEOUT_SCALAR = 1.0
-
 # Prompts
-
 OUTLINE_BRAINSTORM = """
 You are a creative writer who has been tasked with creating a script for a video about a provided topic. \
 You will be given a Wiki article to use as a reference, and your goal is to create an engaging and informative video that will captivate your audience. \
@@ -34,7 +21,6 @@ What are the key points that you want to make? \
 What order should these topics be presented in? \
 This first step is a high level brainstorming session that we will then use to create a more defined outline.
 """.strip()
-
 OUTLINE_WRITE = """
 Now that you have brainstormed some ideas for your script, it's time to create an outline. \
 An outline is a structured plan that organizes your ideas and helps you to create a cohesive and engaging script. \
@@ -112,7 +98,6 @@ Example:
 - Encourage viewers to try out Rampart in Apex Legends and explore her unique playstyle
 - Thank the audience for watching and invite them to like, share, and subscribe
 """
-
 SECTION_WRITE = """
 
 You are a creative writer who has been tasked with creating a script for a video about a provided topic. \
@@ -121,7 +106,6 @@ I have already created an outline for the script, and now it's your turn to writ
 You will be provided with the outline for a given section, and your task is to write the script content for that section based on the Wiki article.
 
 """.strip()
-
 SECTION_WRITE_WITH_CHILDREN = f"""
 
 {SECTION_WRITE}
@@ -131,6 +115,9 @@ These sub-sections have already been written by other writers, and you will need
 Your task is to write the content for the main section (before the sub-sections) and ensure that it flows smoothly into the sub-sections.
 
 """.strip()
+
+
+# Config storage classes
 
 
 class OutlinePrompts:
@@ -149,7 +136,6 @@ class Prompts:
 
 
 class Config:
-    wiki_url = WIKI_URL
     folder = FOLDER
     interactive = INTERACTIVE
     save_intermediate = SAVE_INTERMEDIATE

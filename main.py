@@ -1,4 +1,15 @@
+import random
+
 from wiki2vid import Wiki2Vid
+
+
+def random_wiki_url():
+    return random.choice(
+        [
+            "https://apexlegends.fandom.com/wiki/Fuse",
+            "https://apexlegends.fandom.com/wiki/Bloodhound",
+        ]
+    )
 
 
 def main():
