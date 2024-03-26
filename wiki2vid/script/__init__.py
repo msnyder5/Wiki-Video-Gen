@@ -1,5 +1,5 @@
-from wiki2vid.scripter.outline import Outline, Script
-from wiki2vid.scripter.section import Section
+from wiki2vid.script.outline import Outline, Script
+from wiki2vid.script.section import Section
 from wiki2vid.state import State
 
 

@@ -1,4 +1,4 @@
-from wiki2vid.scripter.script import Script
+from wiki2vid.script.script import Script
 from wiki2vid.wiki import Wiki
 
 

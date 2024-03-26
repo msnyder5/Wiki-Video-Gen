@@ -1,5 +1,5 @@
-from wiki2vid.scripter import ScriptHandler
-from wiki2vid.scripter.outline import Script
+from wiki2vid.script import ScriptHandler
+from wiki2vid.script.outline import Script
 from wiki2vid.state import State
 from wiki2vid.video import VideoGenerator
 

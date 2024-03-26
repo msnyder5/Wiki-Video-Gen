@@ -2,7 +2,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from wiki2vid.ai import AI
 from wiki2vid.config import Config
-from wiki2vid.scripter.outline import Script
+from wiki2vid.script.outline import Script
 from wiki2vid.state import State
 
 
