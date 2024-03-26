@@ -9,7 +9,7 @@ from markdown_it import MarkdownIt
 from markdown_it.token import Token
 
 from wiki2vid.ai import AI
-from wiki2vid.config import CONFIG
+from wiki2vid.config import Config
 from wiki2vid.scripter.script import Script
 from wiki2vid.wiki import Wiki
 
@@ -22,7 +22,7 @@ class Outliner:
     @lru_cache
     def _brainstorming(self) -> str:
         messages = [
-            SystemMessage(content=CONFIG.prompts.outline.brainstorm),
+            SystemMessage(content=Config.prompts.outline.brainstorm),
             HumanMessage(content=self.wiki.content),
         ]
         return self.ai.infer(messages, "brainstorming.md")
@@ -30,10 +30,10 @@ class Outliner:
     @lru_cache
     def _raw_outline(self) -> str:
         messages = [
-            SystemMessage(content=CONFIG.prompts.outline.brainstorm),
+            SystemMessage(content=Config.prompts.outline.brainstorm),
             HumanMessage(content=self.wiki.content),
             AIMessage(content=self._brainstorming()),
-            SystemMessage(content=CONFIG.prompts.outline.write),
+            SystemMessage(content=Config.prompts.outline.write),
         ]
         return self.ai.infer(messages, "outline.md")
 

@@ -1,7 +1,29 @@
 import os
 import random
 
-OUTLINER_BRAINSTORMING_PROMPT = """
+# Input
+
+WIKI_URL = random.choice(
+    [
+        "https://apexlegends.fandom.com/wiki/Fuse",
+        "https://apexlegends.fandom.com/wiki/Bloodhound",
+    ]
+)
+FOLDER = "intermediate"
+
+# Settings
+
+INTERACTIVE = False
+SAVE_INTERMEDIATE = True
+
+# Debugging
+
+VERBOSITY = 5
+TIMEOUT_SCALAR = 1.0
+
+# Prompts
+
+OUTLINE_BRAINSTORM = """
 You are a creative writer who has been tasked with creating a script for a video about a provided topic. \
 You will be given a Wiki article to use as a reference, and your goal is to create an engaging and informative video that will captivate your audience. \
 The first step in this process is to create an outline for your script. \
@@ -13,7 +35,7 @@ What order should these topics be presented in? \
 This first step is a high level brainstorming session that we will then use to create a more defined outline.
 """.strip()
 
-OUTLINER_OUTLINE_PROMPT = """
+OUTLINE_WRITE = """
 Now that you have brainstormed some ideas for your script, it's time to create an outline. \
 An outline is a structured plan that organizes your ideas and helps you to create a cohesive and engaging script. \
 Your outline should include an introduction, body, and conclusion, with each section broken down into key points and subpoints. \
@@ -91,7 +113,7 @@ Example:
 - Thank the audience for watching and invite them to like, share, and subscribe
 """
 
-WRITE_SECTION_PROMPT = """
+SECTION_WRITE = """
 
 You are a creative writer who has been tasked with creating a script for a video about a provided topic. \
 You will be given a Wiki article to use as a reference, and your goal is to create an engaging and informative video that will captivate your audience. \
@@ -100,9 +122,9 @@ You will be provided with the outline for a given section, and your task is to w
 
 """.strip()
 
-WRITE_SECTION_PROMPT_WITH_CHILDREN = f"""
+SECTION_WRITE_WITH_CHILDREN = f"""
 
-{WRITE_SECTION_PROMPT}
+{SECTION_WRITE}
 
 The section you are currently working on has sub-sections. \
 These sub-sections have already been written by other writers, and you will need to incorporate them into your script. \
@@ -112,76 +134,25 @@ Your task is to write the content for the main section (before the sub-sections)
 
 
 class OutlinePrompts:
-    def __init__(self, *, brainstorm: str, write: str):
-        self.brainstorm = brainstorm
-        self.write = write
+    brainstorm = OUTLINE_BRAINSTORM
+    write = OUTLINE_WRITE
 
 
 class SectionPrompts:
-    def __init__(self, *, write: str, write_with_children: str):
-        self.write = write
-        self.write_with_children = write_with_children
+    write = SECTION_WRITE
+    write_with_children = SECTION_WRITE_WITH_CHILDREN
 
 
 class Prompts:
-    def __init__(
-        self,
-        *,
-        outline: OutlinePrompts,
-        section: SectionPrompts,
-    ):
-        self.outline = outline
-        self.section = section
+    outline = OutlinePrompts
+    section = SectionPrompts
 
 
 class Config:
-    def __init__(
-        self,
-        *,
-        wiki_url: str,
-        folder: str,
-        interactive: bool,
-        save_intermediate: bool,
-        verbosity: int,
-        timeout_scalar: float,
-        prompts: Prompts,
-    ):
-        self.wiki_url = wiki_url
-        self.folder = folder
-        if interactive or save_intermediate:
-            os.makedirs(folder, exist_ok=True)
-        self.interactive = interactive
-        self.save_intermediate = save_intermediate
-        self.verbosity = verbosity
-        self.timeout_scalar = timeout_scalar
-        self.prompts = prompts
-
-
-TEST_URLS = [
-    "https://apexlegends.fandom.com/wiki/Fuse",
-    "https://apexlegends.fandom.com/wiki/Bloodhound",
-]
-
-
-CONFIG = Config(
-    # Input
-    wiki_url=random.choice(TEST_URLS),
-    folder="test",
-    # Settings
-    interactive=False,
-    save_intermediate=True,
-    # Debugging
-    verbosity=5,
-    timeout_scalar=1.0,
-    # Prompts
-    prompts=Prompts(
-        outline=OutlinePrompts(
-            brainstorm=OUTLINER_BRAINSTORMING_PROMPT,
-            write=OUTLINER_OUTLINE_PROMPT,
-        ),
-        section=SectionPrompts(
-            write=WRITE_SECTION_PROMPT,
-            write_with_children=WRITE_SECTION_PROMPT_WITH_CHILDREN,
-        ),
-    ),
-)
+    wiki_url = WIKI_URL
+    folder = FOLDER
+    interactive = INTERACTIVE
+    save_intermediate = SAVE_INTERMEDIATE
+    verbosity = VERBOSITY
+    timeout_scalar = TIMEOUT_SCALAR
+    prompts = Prompts

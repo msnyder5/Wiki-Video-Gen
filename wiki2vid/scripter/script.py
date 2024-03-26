@@ -9,7 +9,7 @@ from markdown_it import MarkdownIt
 from markdown_it.token import Token
 
 from wiki2vid.ai import AI
-from wiki2vid.config import CONFIG
+from wiki2vid.config import Config
 from wiki2vid.wiki import Wiki
 
 

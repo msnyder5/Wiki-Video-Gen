@@ -3,7 +3,7 @@ from typing import List
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from wiki2vid.ai import AI
-from wiki2vid.config import CONFIG
+from wiki2vid.config import Config
 from wiki2vid.scripter.outliner import Script
 from wiki2vid.wiki import Wiki
 
@@ -20,14 +20,14 @@ class Sectioner:
                 self.write_section(child, level + 1)
             children_script = section.children_script
             messages = [
-                SystemMessage(content=CONFIG.prompts.section.write_with_children),
+                SystemMessage(content=Config.prompts.section.write_with_children),
                 HumanMessage(content=self.wiki.content),
                 HumanMessage(content=f"**CHILDREN SCRIPTS**\n\n{children_script}"),
                 HumanMessage(content=section.outline_spec),
             ]
         else:
             messages = [
-                SystemMessage(content=CONFIG.prompts.section.write),
+                SystemMessage(content=Config.prompts.section.write),
                 HumanMessage(content=self.wiki.content),
                 HumanMessage(content=section.outline_spec),
             ]
