@@ -1,3 +1,4 @@
 /intermediate
 __pycache__/
 .env
+.venv/
