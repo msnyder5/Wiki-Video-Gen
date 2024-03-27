@@ -132,12 +132,14 @@ class SegmentNode:
         children: Optional[List[SegmentNode]] = None,
         level: int = 0,
         parent_folder: str = Config.folder,
+        audio_duation: float = 60.0,
     ):
         self.script = SegmentScript(segment_name, description, notes, content, self)
         self.search_terms: List[str] = search_terms or []
         self.children: List[SegmentNode] = children or []
         self.level = level
         self.folder: str = f"{parent_folder}/{self.script.title}"
+        self.audio_duration = audio_duation
 
     @property
     def nodes(self) -> List[SegmentNode]:

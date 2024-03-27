@@ -1,0 +1,12 @@
+elevenlabs
+pydub
+langchain
+langchain-core
+langchain-openai
+markdown-it-py
+opencv-python
+requests
+python-dotenv
+pypandoc
+python-ffmpeg
+moviepy
