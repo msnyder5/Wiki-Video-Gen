@@ -1,125 +1,141 @@
-from typing import List
+from typing import Dict, List, Union
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 
 from wiki2vid.ai import AI
 from wiki2vid.config import Config
-from wiki2vid.script.script import Script, ScriptNode
-from wiki2vid.state import State
-
-TEST_OUTLINE = """
-## Introduction
-Bloodhound, the Technological Tracker, is a formidable Recon Legend in Apex Legends. Known for their unparalleled tracking skills, Bloodhound can reveal hidden enemies, traps, and clues, making them a vital asset to any team. They are the embodiment of the perfect hunter, blending the Old Ways with advanced technology to locate and eliminate their prey.
-
-## Abilities
-
-### Ultimate Ability: Beast of the Hunt
-- Transforms Bloodhound into the ultimate hunter, enhancing their senses to see cold tracks and moving faster.
-- Launches a White Raven towards the nearest enemy, with downed enemies causing additional White Ravens to spawn.
-- Downing enemies extends the duration of the ability, with a base duration of 30 seconds.
-- Increases speed by 30%, and highlights enemies in red, making it easier to see them even through smoke or gas.
-
-### Tactical Ability: Eye of the Allfather
-- Reveals enemies, traps, and clues through all structures in front of you in a 125� cone.
-- Has a range of up to 75 meters and highlights detected enemies for you and your allies.
-- Activation time is 1.8s, with a cooldown of 25 seconds.
-- Exposes Bloodhound to detection but provides critical information on enemy positions.
-
-### Passive Ability: Tracker
-- Enemies leave behind clues that Bloodhound can see to track their movements.
-- Clues include footprints, slide marks, and actions like door usage or gunfire, which disappear after 90 seconds.
-- White Ravens may appear to guide Bloodhound to battle, charging their abilities when activated or scanned.
-
-## Legend Upgrades
-- Special perks available in Battle Royale modes, enhancing abilities as Bloodhound levels up their Evo Armor.
-- Options include reducing the cooldown of Eye of the Allfather, making White Ravens grant more Beast of the Hunt charge, and others that enhance the effectiveness of Bloodhound's abilities.
-
-## Conclusion
-Bloodhound's mastery of tracking and reconnaissance makes them a powerhouse in Apex Legends. Their abilities allow teams to gain the upper hand by revealing enemy positions, setting up ambushes, or avoiding traps. Whether leading the charge with Beast of the Hunt or strategically using Eye of the Allfather to scan the battlefield, Bloodhound exemplifies the perfect synergy between the primal and the technological, proving that knowledge is power on the battlefield.
-""".strip()
-
-TEST_BRAINSTORM = """
-- Intro
-- Abilities
-    - Ultimate Ability
-    - Tactical Ability
-    - Passive Ability
-- Any other perks or unique features if applicable
-- Conclusion
-""".strip()
+from wiki2vid.segment import Content, SegmentNode
 
 
 class ScriptBuilder:
-    def __init__(self, state: State):
-        self.state = state
+    def __init__(self, content: Content):
+        self.content = content
 
-    def create_script(self) -> Script:
-        # self._brainstorm()
-        self.state.brainstorm = TEST_BRAINSTORM
-        # self._write_outline()
-        self.state.script.root.update_from_outline_markdown(TEST_OUTLINE)
-        self._write_sections()
-        self._revise_sections()
-        return self.state.script
+    def create_script(self) -> None:
+        self.brainstorm()
+        self.write_outline()
+        self.take_notes()
+        self.write_sections()
+        self.revise_sections(1)
+        # self.revise_sections(2)
+        self.smooth_transitions()
 
-    def _brainstorm(self) -> None:
-        messages = Config.prompts.outline.brainstorm.format_messages(
-            wiki_content=self.state.wiki.content
+    def brainstorm(self) -> str:
+        messages = Config.prompts.brainstorm.format_messages(
+            wiki_content=self.content.wiki.content
         )
-        self.state.brainstorm = AI.infer(messages, f"{Config.folder}/brainstorming.md")
+        self.content.brainstorm = AI.infer(
+            messages, f"{Config.folder}/brainstorming.md"
+        )
+        return self.content.brainstorm
 
-    def _write_outline(self) -> None:
-        messages = Config.prompts.outline.write.format_messages(
-            wiki_content=self.state.wiki.content, brainstorm=self.state.brainstorm
+    def write_outline(self) -> str:
+        messages = Config.prompts.outline.format_messages(
+            wiki_content=self.content.wiki.content,
+            brainstorm=self.content.brainstorm,
         )
         response = AI.infer(messages, f"{Config.folder}/outline.md")
-        self.state.script.root.update_from_outline_markdown(response)
+        self.content.root.script.update_from_outline_markdown(response)
+        return response
 
-    def _write_sections(self) -> None:
-        def _write_section(section: ScriptNode) -> None:
+    def take_notes(self) -> Dict[str, Union[str, Dict]]:
+        def _take_notes(section: SegmentNode) -> Union[str, Dict]:
             if section.children:
-                for child in section.children:
-                    _write_section(child)
-                # messages = Config.prompts.section.write_with_children.format_messages(
-                #     wiki_content=self.state.wiki.content,
-                #     section_outline=section.self_outline,
-                #     children=section.children_script,
-                # )
+                return {
+                    child.script.title: _take_notes(child) for child in section.children
+                }
+            messages = Config.prompts.notes.format_messages(
+                wiki_content=self.content.wiki.content,
+                section_outline=section.script.self_outline,
+            )
+            section.script.notes = AI.infer(messages, f"{section.folder}/notes.md")
+            return section.script.notes
+
+        return {
+            section.script.title: _take_notes(section)
+            for section in self.content.root.children
+        }
+
+    def write_sections(self) -> Dict[str, Union[str, Dict]]:
+        def _write_section(section: SegmentNode) -> Union[str, Dict]:
+            if section.children:
+                return {
+                    child.script.title: _write_section(child)
+                    for child in section.children
+                }
             else:
-                messages = Config.prompts.section.write.format_messages(
-                    wiki_content=self.state.wiki.content,
-                    section_outline=section.self_outline,
+                messages = Config.prompts.write.format_messages(
+                    wiki_notes=section.script.notes,
+                    current_script=self.content.script,
+                    section_outline=section.script.self_outline,
                 )
-                section.content = AI.infer(messages, section.filename)
+                section.script.content = AI.infer(
+                    messages, f"{section.folder}/draft.md"
+                )
+                return section.script.content
 
-        for section in self.state.script.root.children:
-            _write_section(section)
+        return {
+            section.script.title: _write_section(section)
+            for section in self.content.root.children
+        }
 
-    def _revise_sections(self) -> None:
-        def _section_feedbacks(section: ScriptNode) -> List[HumanMessage]:
-            messages = Config.prompts.section.feedback.format_messages(
-                section_content=section.content
+    def revise_sections(self, rev: int = 1) -> Dict[str, Union[str, Dict]]:
+        def _section_feedbacks(section: SegmentNode) -> List[HumanMessage]:
+            messages = Config.prompts.feedback.format_messages(
+                script=self.content.script,
+                section_outline=section.script.self_outline,
+                section_content=section.script.content,
             )
             feedbacks = [
-                AI.infer(messages, f"{section.filepath}_feedback{i}.md")
+                AI.infer(messages, f"{section.folder}/feedback_{rev}_{i+1}.md")
                 for i in range(Config.num_feedbacks)
             ]
             return [HumanMessage(content=feedback) for feedback in feedbacks]
 
-        def _revise_section(section: ScriptNode) -> None:
-            messages = Config.prompts.section.revise.format_messages(
-                section_content=section.content
-            ) + _section_feedbacks(section)
-            response = AI.infer(messages, f"{section.filepath}_revision.md")
-            section.update_from_script_markdown(response)
-
-        for section in self.state.script.root.children:
+        def _revise_section(section: SegmentNode) -> Union[str, Dict]:
             if section.children:
-                for child in section.children:
-                    if child.children:
-                        for grandchild in child.children:
-                            _revise_section(grandchild)
-                    else:
-                        _revise_section(child)
-            else:
-                _revise_section(section)
+                return {
+                    child.script.title: _revise_section(child)
+                    for child in section.children
+                }
+            messages = Config.prompts.revise.format_messages(
+                script=self.content.script,
+                section_outline=section.script.self_outline,
+                section_content=section.script.content,
+            ) + _section_feedbacks(section)
+            response = AI.infer(messages, f"{section.folder}/revision_{rev}.md")
+            section.script.update_from_script_markdown(response)
+            return response
+
+        return {
+            section.script.title: _revise_section(section)
+            for section in self.content.root.children
+        }
+
+    def smooth_transitions(self) -> List[str]:
+        nodes = self.content.clean_nodes
+        ret = []
+        for prev, next in zip(nodes[:-1], nodes[1:]):
+            last_paragraph = prev.script.content.split("\n\n")[-1]
+            first_paragraph = next.script.content.split("\n\n")[0]
+            messages = Config.prompts.transition.format_messages(
+                previous_paragraph=last_paragraph,
+                next_paragraph=first_paragraph,
+            )
+            response = AI.infer(messages, f"{next.folder}/transition.md")
+            paragraphs = response.split("\n\n")
+            while len(paragraphs) != 2:
+                response = AI.infer(
+                    messages, f"{next.folder}/transition.md", reuse=False
+                )
+                paragraphs = response.split("\n\n")
+            new_last_paragraph = paragraphs[0].strip()
+            new_first_paragraph = paragraphs[1].strip()
+            prev.script.content = prev.script.content.replace(
+                last_paragraph, new_last_paragraph
+            )
+            next.script.content = next.script.content.replace(
+                first_paragraph, new_first_paragraph
+            )
+            ret.append(response)
+        return ret

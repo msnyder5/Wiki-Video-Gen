@@ -1,4 +1,4 @@
-from wiki2vid.script import Script, ScriptBuilder, ScriptNode
+from wiki2vid.script import Content, ScriptBuilder, SegmentNode
 from wiki2vid.state import State
 from wiki2vid.video import VideoGenerator
 
@@ -7,7 +7,7 @@ class Wiki2Vid:
     def __init__(self, wiki_url: str = ""):
         self.state = State(wiki_url)
 
-    def get_script(self) -> Script:
+    def get_script(self) -> Content:
         scripter = ScriptBuilder(self.state)
         return scripter.create_script()
 

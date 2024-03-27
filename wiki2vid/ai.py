@@ -1,6 +1,6 @@
 import os
 import time
-from typing import List
+from typing import List, Optional
 
 from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
@@ -12,17 +12,16 @@ class AI:
     chat = ChatOpenAI(model="gpt-4-0125-preview")
 
     @staticmethod
-    def infer(messages: List[BaseMessage], filepath: str = "progress.md") -> str:
+    def infer(
+        messages: List[BaseMessage], filepath: Optional[str] = None, reuse=True
+    ) -> str:
         if Config.verbosity >= 1:
             print(f"infer({filepath})")
-        # Debug print
-        if Config.verbosity >= 6:
-            print(
-                "-" * 50,
-                "\n".join(str(message.content) for message in messages),
-                "",
-                sep="\n\n",
-            )
+
+        # Check if the response is already saved
+        if reuse and filepath and os.path.exists(filepath):
+            with open(filepath, "r") as f:
+                return f.read()
 
         # Get the response and convert it to a string
         response = AI.chat.invoke(messages)
@@ -33,10 +32,9 @@ class AI:
             print(response.content)
             ret = str(response.content)
 
-        # Debug print
-        if Config.verbosity >= 4:
-            print("-" * 50, ret, "-" * 50, sep="\n\n")
-            time.sleep(Config.timeout_scalar)
+        # Return the response if no filepath is provided
+        if not filepath:
+            return ret
 
         # Save the response to a file if needed
         if Config.save_intermediate or Config.interactive:
