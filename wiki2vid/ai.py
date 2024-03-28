@@ -7,6 +7,9 @@ from langchain_openai import ChatOpenAI
 
 from wiki2vid.config import Config
 
+# Models:
+# gpt-4-0125-preview
+# gpt-3.5-turbo
 
 class AI:
     chat = ChatOpenAI(model="gpt-4-0125-preview")

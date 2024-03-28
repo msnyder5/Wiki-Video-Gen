@@ -1,4 +1,5 @@
-/intermediate
 __pycache__/
 .env
+.conda/
 .venv/
+output/

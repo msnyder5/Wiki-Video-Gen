@@ -6,13 +6,26 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 
+WIKI_QUICKY = """
+Wiki Quicky is a premiere YouTube channel that produces quick, informative videos on a wide range of topics. \
+Our videos are designed to be engaging, educational, and visually appealing, providing viewers with valuable insights in a short amount of time. \
+Our videos typically follow the following general structure:
+
+- Pre-Hook: A brief, attention-grabbing introduction to the broad topic. (~10 seconds)
+- Exposition: Provide background information to set up the hook. (~1 minute)
+- Hook: Propose a question or intriguing fact to capture the viewer's interest. (~15 seconds)
+- Body: Present the main content, focusing on key points and engaging information. (~2-3 minutes)
+- Conclusion: Summarize the main points, provide a closing thought, thank the viewer for watching, and call to action to like and subscribe. (~30 seconds)
+
+""".strip()
+
 # Have the AI brainstorm engaging and informative topics from a Wiki article.
-BRAINSTORM_PROMPT = """
-As a creative scriptwriter for educational videos, your task is to brainstorm engaging and informative topics from a Wiki article. \
-Focus on identifying captivating elements and key information that will appeal to the audience, while maintaining brevity. \
-Consider unique angles or lesser-known facts that could enhance viewer interest. \
-Avoid detailed technicalities or exhaustive lists to keep the video concise. \
-Begin brainstorming potential topics and a general structure, avoiding a detailed outline at this stage.
+BRAINSTORM_PROMPT = f"""
+{WIKI_QUICKY}
+
+You are a thought leader at Wiki Quicky, a popular YouTube channel that produces educational videos. \
+It is your responsibility to brainstorm engaging and informative topics based on a provided Wiki article. \
+Brainstorm 3 different topics that could be covered in a video based on the content of the article.
 """.strip()
 BRAINSTORM_TEMPLATE = ChatPromptTemplate.from_messages(
     [
@@ -25,20 +38,74 @@ BRAINSTORM_TEMPLATE = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Have the AI create a structured outline for the video script based on the brainstormed topics.
-OUTLINE_PROMPT = """
-As a scriptwriter, using the ideas from your brainstorm, create a structured outline for the video script. \
-Your outline should include a clear introduction, body, and conclusion, focusing only on the most interesting and relevant aspects of the topic. \
-Use markdown formatting with headers for main sections and bullet points for key topics. \
-Remember to keep the content concise and avoid including extraneous details like exhaustive technical data or comprehensive lists.
+BRAINSTORM_CHOOSE_PROMPT = """
+Choose the most engaging and informative topic from your brainstorming session. \
+Go into detail about why you think this topic would make a great video. \
+Explain how you think the video could be framed and what key points would be covered. \
+Consider the target audience and the overall style of Wiki Quicky videos.
+""".strip()
+BRAINSTORM_CHOOSE_TEMPLATE = BRAINSTORM_TEMPLATE + ChatPromptTemplate.from_messages(
+    [
+        AIMessagePromptTemplate.from_template(
+            "{brainstorm}",
+        ),
+        HumanMessagePromptTemplate.from_template(
+            BRAINSTORM_CHOOSE_PROMPT,
+            additional_kwargs={"name": "instructions"},
+        ),
+    ]
+)
 
-**Formatting Guidelines:**
+# Have the AI create a structured outline for the video script based on the brainstormed topics.
+OUTLINE_PROMPT = f"""
+{WIKI_QUICKY}
+
+You are a writer at Wiki Quicky, a popular YouTube channel that produces educational videos. \
+It is your responsibility to create a structured outline for a video script. \
+Another team member has brainstormed the topic, and you need to create a detailed outline for the video script. \
+The wiki article provides the source information for the video script. \
+Use markdown formatting with headers for main sections and bullet points for key topics.
+
+Because the Introduction and Hook are both only 1-2 sentences, just write them out in the outline. \
+
+Formatting Guidelines:
+
 - Markdown headers for each section.
 - Bullet points for key points and subpoints.
-- Bold or italic for emphasis.
-- Keep it concise and engaging, adhering strictly to markdown format.
 - Your response should be only the outline, and should not include any acknowledgements of the task, instructions, or next steps.
-    - The first line of your response should be `## Introduction`, and the last line should be the last bullet point of the conclusion.
+- The first line of your response should be `## Introduction`, and the last line should be the last bullet point of the conclusion.
+
+Your outline should include the following sections:
+
+## Introduction
+
+- A brief, attention-grabbing introduction to the broad topic.
+- 1-2 sentences.
+
+## Exposition
+
+- Provide background information to set up the hook.
+- ~1 minute
+
+## Hook
+
+- Propose a question to capture the viewer's interest, that will then be explained in the body.
+- This is where a viewer decides to watch the video or not.
+- 1-2 sentences.
+
+## Body
+
+- Present the main content, focusing on key points and engaging information.
+- Continue building up more information until you answer the question posed in the hook.
+- ~2-3 minutes
+
+## Conclusion
+
+- Summarize the main points
+- Provide a closing thought
+- Thank the viewer for watching
+- Call to action to like and subscribe.
+- ~30 seconds
 """.strip()
 OUTLINE_TEMPLATE = ChatPromptTemplate.from_messages(
     [
@@ -115,6 +182,39 @@ WRITE_TEMPLATE = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template(
             "{section_outline}",
             additional_kwargs={"name": "section_outline"},
+        ),
+    ]
+)
+
+# Have the AI write a complete script based on the provided outline and wiki article.
+WHOLE_WRITE_PROMPT = f"""
+{WIKI_QUICKY}
+
+You are a scriptwriter at Wiki Quicky, a popular YouTube channel that produces educational videos. \
+Your task is to write a complete script based on the provided outline and the content of the wiki article. \
+Craft engaging and informative content that follows the structure outlined in the prompt. \
+Ensure that the script is well-organized, engaging, and informative, capturing the essence of the topic. \
+The script should be in plain text and formatted as engaging prose.
+
+**You are writing the entire script, so write everything exactly as you would like it to be read.**
+
+Instructions:
+- Write in plain text, avoiding markdown formatting.
+- Focus on brevity and clarity.
+- Ensure the content is engaging and flows well.
+- Use full sentences and proper grammar.
+- Your response should be only the plaintext content for the entire script, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the text that is read.
+""".strip()
+WHOLE_WRITE_TEMPLATE = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate.from_template(
+            WHOLE_WRITE_PROMPT, additional_kwargs={"name": "instructions"}
+        ),
+        HumanMessagePromptTemplate.from_template(
+            "{wiki_content}", additional_kwargs={"name": "wiki_content"}
+        ),
+        HumanMessagePromptTemplate.from_template(
+            "{video_outline}", additional_kwargs={"name": "video_outline"}
         ),
     ]
 )
@@ -305,9 +405,11 @@ FOOTAGE_TEMPLATE = ChatPromptTemplate.from_messages(
 
 class Prompts:
     brainstorm = BRAINSTORM_TEMPLATE
+    brainstorm_choose = BRAINSTORM_CHOOSE_TEMPLATE
     outline = OUTLINE_TEMPLATE
     notes = NOTES_TEMPLATE
     write = WRITE_TEMPLATE
+    whole_write = WHOLE_WRITE_TEMPLATE
     feedback = FEEDBACK_TEMPLATE
     revise = REVISE_TEMPLATE
     transition = TRANSITION_TEMPLATE

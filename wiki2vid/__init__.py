@@ -1,5 +1,5 @@
 from wiki2vid.audio import AudioBuilder
-from wiki2vid.script import ScriptBuilder
+from wiki2vid.script2 import ScriptBuilder
 from wiki2vid.segment import Content
 from wiki2vid.seo import SEOBuilder
 from wiki2vid.video import VideoBuilder
@@ -13,7 +13,7 @@ class Wiki2Vid:
         self.build_script()
         self.build_seo()
         self.build_audio()
-        self.build_video()
+        # self.build_video()
 
     def build_script(self) -> None:
         script_builder = ScriptBuilder(self.content)

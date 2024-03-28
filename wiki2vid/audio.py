@@ -4,8 +4,10 @@ from typing import Iterator, Union
 
 from elevenlabs import VoiceSettings, save
 from elevenlabs.client import ElevenLabs
+from moviepy.editor import AudioFileClip, concatenate_audioclips
 from pydub import AudioSegment
 
+from wiki2vid.config import Config
 from wiki2vid.segment import Content, SegmentNode
 
 
@@ -20,7 +22,7 @@ class AudioBuilder:
             if not os.path.exists(audio_path):
                 audio = self._build_segment_audio(node)
                 save(audio, audio_path)
-            node.audio_duration = self._get_audio_duration(audio_path)
+            node.audio_duration = AudioFileClip(audio_path).duration
 
     def _build_segment_audio(
         self, segment: SegmentNode
@@ -35,11 +37,10 @@ class AudioBuilder:
             ),
         )
 
-    def _get_audio_duration(self, audio_path: str) -> float:
-        # audio_path = os.path.abspath(audio_path)
-        # print(audio_path)
-        # audio = MPyg123Player(audio_path)
-        # time.sleep(10)
-        audio = AudioSegment.from_file(audio_path, format="mp3")
-        print(len(audio) / 1000.0)
-        return len(audio) / 1000.0
+    def _build_concat_audio(self):
+        audio_clips = [
+            AudioFileClip(f"{node.folder}/audio.mp3").duration
+            for node in self.content.clean_nodes
+        ]
+        concatenated_audio = concatenate_audioclips(audio_clips)
+        concatenated_audio.write_audiofile(f"{Config.folder}output.mp3")

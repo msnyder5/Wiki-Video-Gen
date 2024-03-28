@@ -12,24 +12,28 @@ class ScriptBuilder:
         self.content = content
 
     def create_script(self) -> None:
-        self.brainstorm()
-        self.write_outline()
-        self.take_notes()
-        self.write_sections()
-        self.revise_sections(1)
+        self._brainstorm()
+        self._write_outline()
+        self._take_notes()
+        self._write_sections()
+        self._revise_sections(1)
         # self.revise_sections(2)
         self.smooth_transitions()
 
-    def brainstorm(self) -> str:
+    def _brainstorm(self) -> str:
         messages = Config.prompts.brainstorm.format_messages(
             wiki_content=self.content.wiki.content
         )
+        brainstorm = AI.infer(messages, f"{Config.folder}/brainstorm.md")
+        messages = Config.prompts.brainstorm_choose.format_messages(
+            wiki_content=self.content.wiki.content, brainstorm=brainstorm
+        )
         self.content.brainstorm = AI.infer(
-            messages, f"{Config.folder}/brainstorming.md"
+            messages, f"{Config.folder}/brainstorm_choose.md"
         )
         return self.content.brainstorm
 
-    def write_outline(self) -> str:
+    def _write_outline(self) -> str:
         messages = Config.prompts.outline.format_messages(
             wiki_content=self.content.wiki.content,
             brainstorm=self.content.brainstorm,
@@ -38,7 +42,7 @@ class ScriptBuilder:
         self.content.root.script.update_from_outline_markdown(response)
         return response
 
-    def take_notes(self) -> Dict[str, Union[str, Dict]]:
+    def _take_notes(self) -> Dict[str, Union[str, Dict]]:
         def _take_notes(section: SegmentNode) -> Union[str, Dict]:
             if section.children:
                 return {
@@ -56,7 +60,7 @@ class ScriptBuilder:
             for section in self.content.root.children
         }
 
-    def write_sections(self) -> Dict[str, Union[str, Dict]]:
+    def _write_sections(self) -> Dict[str, Union[str, Dict]]:
         def _write_section(section: SegmentNode) -> Union[str, Dict]:
             if section.children:
                 return {
@@ -79,7 +83,7 @@ class ScriptBuilder:
             for section in self.content.root.children
         }
 
-    def revise_sections(self, rev: int = 1) -> Dict[str, Union[str, Dict]]:
+    def _revise_sections(self, rev: int = 1) -> Dict[str, Union[str, Dict]]:
         def _section_feedbacks(section: SegmentNode) -> List[HumanMessage]:
             messages = Config.prompts.feedback.format_messages(
                 script=self.content.script,

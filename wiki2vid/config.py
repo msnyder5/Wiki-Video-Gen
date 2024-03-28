@@ -1,7 +1,7 @@
 from wiki2vid.prompts import Prompts
 
 # Input
-FOLDER = "intermediate"
+FOLDER = "output/trainsurfing"
 # Settings
 INTERACTIVE = False
 SAVE_INTERMEDIATE = True
