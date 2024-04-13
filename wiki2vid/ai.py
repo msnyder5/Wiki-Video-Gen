@@ -1,6 +1,6 @@
 import os
 import time
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
@@ -11,16 +11,17 @@ from wiki2vid.config import Config
 # gpt-4-0125-preview
 # gpt-3.5-turbo
 
+
 class AI:
-    chat = ChatOpenAI(model="gpt-4-0125-preview")
+    chat = ChatOpenAI(model=Config.llm_model)
 
     @staticmethod
     def infer(
-        messages: List[BaseMessage], filepath: Optional[str] = None, reuse=True
+        messages: List[BaseMessage],
+        filepath: Optional[str] = None,
+        reuse=True,
+        formatter: Callable[[str], str] = lambda x: x,
     ) -> str:
-        if Config.verbosity >= 1:
-            print(f"infer({filepath})")
-
         # Check if the response is already saved
         if reuse and filepath and os.path.exists(filepath):
             with open(filepath, "r") as f:
@@ -34,6 +35,8 @@ class AI:
             print("Got a list response from the model:")
             print(response.content)
             ret = str(response.content)
+
+        ret = formatter(ret)
 
         # Return the response if no filepath is provided
         if not filepath:

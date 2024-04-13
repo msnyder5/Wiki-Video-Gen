@@ -1,7 +1,9 @@
 from wiki2vid.prompts import Prompts
 
 # Input
-FOLDER = "output/trainsurfing"
+FOLDER = "output"
+# AI Models
+LLM_MODEL = "gpt-3.5-turbo"  # gpt-4-0125-preview, gpt-3.5-turbo
 # Settings
 INTERACTIVE = False
 SAVE_INTERMEDIATE = True
@@ -14,6 +16,7 @@ TIMEOUT_SCALAR = 0.0
 
 class Config:
     folder = FOLDER
+    llm_model = LLM_MODEL
     interactive = INTERACTIVE
     save_intermediate = SAVE_INTERMEDIATE
     num_feedbacks = NUM_FEEDBACKS
