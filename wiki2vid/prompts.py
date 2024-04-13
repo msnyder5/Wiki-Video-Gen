@@ -6,7 +6,7 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 
-WIKI_QUICKY = """
+WIKI_QUICKY_DESC = """
 Wiki Quicky is a premiere YouTube channel that produces quick, informative videos on a wide range of topics. \
 Our videos are designed to be engaging, educational, and visually appealing, providing viewers with valuable insights in a short amount of time. \
 Our videos typically follow the following general structure:
@@ -21,13 +21,13 @@ Our videos typically follow the following general structure:
 
 # Have the AI brainstorm engaging and informative topics from a Wiki article.
 BRAINSTORM_PROMPT = f"""
-{WIKI_QUICKY}
+{WIKI_QUICKY_DESC}
 
 You are a thought leader at Wiki Quicky, a popular YouTube channel that produces educational videos. \
 It is your responsibility to brainstorm engaging and informative topics based on a provided Wiki article. \
 Brainstorm 3 different topics that could be covered in a video based on the content of the article.
 """.strip()
-BRAINSTORM_TEMPLATE = ChatPromptTemplate.from_messages(
+BRAINSTORM = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             BRAINSTORM_PROMPT, additional_kwargs={"name": "instructions"}
@@ -44,7 +44,7 @@ Go into detail about why you think this topic would make a great video. \
 Explain how you think the video could be framed and what key points would be covered. \
 Consider the target audience and the overall style of Wiki Quicky videos.
 """.strip()
-BRAINSTORM_CHOOSE_TEMPLATE = BRAINSTORM_TEMPLATE + ChatPromptTemplate.from_messages(
+BRAINSTORM_CHOOSE = BRAINSTORM + ChatPromptTemplate.from_messages(
     [
         AIMessagePromptTemplate.from_template(
             "{brainstorm}",
@@ -58,7 +58,7 @@ BRAINSTORM_CHOOSE_TEMPLATE = BRAINSTORM_TEMPLATE + ChatPromptTemplate.from_messa
 
 # Have the AI create a structured outline for the video script based on the brainstormed topics.
 OUTLINE_PROMPT = f"""
-{WIKI_QUICKY}
+{WIKI_QUICKY_DESC}
 
 You are a writer at Wiki Quicky, a popular YouTube channel that produces educational videos. \
 It is your responsibility to create a structured outline for a video script. \
@@ -107,7 +107,7 @@ Your outline should include the following sections:
 - Call to action to like and subscribe.
 - ~30 seconds
 """.strip()
-OUTLINE_TEMPLATE = ChatPromptTemplate.from_messages(
+OUTLINE = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             OUTLINE_PROMPT, additional_kwargs={"name": "instructions"}
@@ -139,7 +139,7 @@ Notes will be taken for each section individually, so do not include information
 - Avoid lengthy verbatim excerpts.
 - Your response should be only the plaintext notes for the specific section, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the text that is read.
 """.strip()
-NOTES_TEMPLATE = ChatPromptTemplate.from_messages(
+NOTES = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             NOTES_PROMPT, additional_kwargs={"name": "instructions"}
@@ -154,41 +154,9 @@ NOTES_TEMPLATE = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Have the AI write engaging content for a specific section based on the provided outline.
-WRITE_PROMPT = """
-As a video scriptwriter, your job is to write engaging content for a specific section, based on the provided outline. \
-Craft the script in a way that is informative yet concise, ensuring it captures the essence of the topic. \
-Avoid lengthy expositions, focusing instead on clear and concise delivery. \
-The script should be in plain text and formatted as engaging prose. \
-Remember, the length of each section should correspond to its importance, with key sections given more detail. 
-
-**Instructions:**
-- Write in plain text, avoiding markdown formatting.
-- Focus on brevity and clarity.
-- Ensure the content is engaging and flows well.
-- Your response should be only the plaintext content for the specific section, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the text that is read.
-""".strip()
-WRITE_TEMPLATE = ChatPromptTemplate.from_messages(
-    [
-        SystemMessagePromptTemplate.from_template(
-            WRITE_PROMPT, additional_kwargs={"name": "instructions"}
-        ),
-        HumanMessagePromptTemplate.from_template(
-            "{wiki_notes}", additional_kwargs={"name": "wiki_notes"}
-        ),
-        HumanMessagePromptTemplate.from_template(
-            "{current_script}", additional_kwargs={"name": "current_script"}
-        ),
-        HumanMessagePromptTemplate.from_template(
-            "{section_outline}",
-            additional_kwargs={"name": "section_outline"},
-        ),
-    ]
-)
-
 # Have the AI write a complete script based on the provided outline and wiki article.
-WHOLE_WRITE_PROMPT = f"""
-{WIKI_QUICKY}
+WRITE_PROMPT = f"""
+{WIKI_QUICKY_DESC}
 
 You are a scriptwriter at Wiki Quicky, a popular YouTube channel that produces educational videos. \
 Your task is to write a complete script based on the provided outline and the content of the wiki article. \
@@ -205,16 +173,53 @@ Instructions:
 - Use full sentences and proper grammar.
 - Your response should be only the plaintext content for the entire script, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the text that is read.
 """.strip()
-WHOLE_WRITE_TEMPLATE = ChatPromptTemplate.from_messages(
+WRITE = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
-            WHOLE_WRITE_PROMPT, additional_kwargs={"name": "instructions"}
+            WRITE_PROMPT, additional_kwargs={"name": "instructions"}
         ),
         HumanMessagePromptTemplate.from_template(
             "{wiki_content}", additional_kwargs={"name": "wiki_content"}
         ),
         HumanMessagePromptTemplate.from_template(
             "{video_outline}", additional_kwargs={"name": "video_outline"}
+        ),
+    ]
+)
+
+IMAGES_PROMPT = """
+You are a video editor at Wiki Quicky, a popular YouTube channel that produces educational videos. \
+Your task is to collect images that will be displayed during the video accompany the script. \
+You will be provided with the starting time in seconds for every "segment" in the script in the following format:
+
+[0.00]  Well, buckle up, history enthusiasts, as we embark on a journey back in time to the Tudor period,
+[6.34]  where strategy, ambition, and a bit of luck could elevate a family to the heart of English power.
+[13.08]  The Cope family of Oxfordshire, England, serves as a fascinating case study in social mobility during the Tudor period.
+
+The goal is to choose an image for every segment that will enhance the viewer's understanding and engagement with the content.
+
+You have two options when selecting images for a given segment:
+
+1. Searching Google Images for a relevant image.
+2. Using DALL-E to generate an image.
+
+You should use Google Images in the case where you need an image of a historic event, or event a specific person. \
+You should use DALL-E to generate images in all other cases.
+
+Your task is to determine where images should go, and provide either a search term or a generation prompt for an image. \
+Your output format should be in the following format:
+
+[0.00] [DALL-E] a historic image of the bustling streets of tudor period england
+[6.34] [DALL-E] a surreal illustration of a tudor period royal family
+[13.08] [Google] Cope family Oxfordshire
+""".strip()
+IMAGES = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate.from_template(
+            IMAGES_PROMPT, additional_kwargs={"name": "instructions"}
+        ),
+        HumanMessagePromptTemplate.from_template(
+            "{segment_timestamps}", additional_kwargs={"name": "segment_timestamps"}
         ),
     ]
 )
@@ -237,7 +242,7 @@ Balance your feedback with positive points and targeted improvement areas.
 - Comment on the section's length.
 - Evaluate the transition from the previous section and to the next section.
 """.strip()
-FEEDBACK_TEMPLATE = ChatPromptTemplate.from_messages(
+FEEDBACK = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             FEEDBACK_PROMPT, additional_kwargs={"name": "instructions"}
@@ -268,7 +273,7 @@ Incorporate feedback thoughtfully to produce a more concise, focused, and engagi
 - Aim for a concise, compelling narrative.
 - Your response should be only the plaintext content for the specific section, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the text that is read.
 """.strip()
-REVISE_TEMPLATE = ChatPromptTemplate.from_messages(
+REVISE = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             REVISE_PROMPT, additional_kwargs={"name": "instructions"}
@@ -301,7 +306,7 @@ This is how your output will be parsed, and if you do not return both paragraphs
 - Your response should include both the last paragraph of the previous section and the first paragraph of the next section, revised to create a seamless transition.
 - Do not include any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown. Your response is only the two paragraphs that are read.
 """.strip()
-TRANSITION_TEMPLATE = ChatPromptTemplate.from_messages(
+TRANSITION = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             TRANSITION_PROMPT, additional_kwargs={"name": "instructions"}
@@ -329,7 +334,7 @@ Your goal is to create a title that accurately represents the content and piques
 - Consider the tone, style, and target audience of the video.
 - Your response should be only the title, without any additional instructions, acknowledgements, editing notes, visual guides, or markdown.
 """.strip()
-VIDEO_TITLE_TEMPLATE = ChatPromptTemplate.from_messages(
+VIDEO_TITLE = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             VIDEO_TITLE_PROMPT, additional_kwargs={"name": "instructions"}
@@ -355,7 +360,7 @@ It is important to have a long list of relevant keywords to improve the video's 
 - Highlight key points and engage viewers.
 - Include a lengthy list of keyword stuffing terms at the end of the description.
 """.strip()
-VIDEO_DESCRIPTION_TEMPLATE = ChatPromptTemplate.from_messages(
+VIDEO_DESCRIPTION = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             VIDEO_DESCRIPTION_PROMPT, additional_kwargs={"name": "instructions"}
@@ -388,7 +393,7 @@ Consider the tone, style, and message of the script when selecting search terms.
 - Aim for engaging and visually appealing footage.
 - Your response should be only the newline seperated list of search terms, without any additional instructions, acknowledgements, editing notes, visual guides, titles, or markdown.
 """.strip()
-FOOTAGE_TEMPLATE = ChatPromptTemplate.from_messages(
+FOOTAGE = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(
             FOOTAGE_PROMPT, additional_kwargs={"name": "instructions"}
@@ -404,15 +409,15 @@ FOOTAGE_TEMPLATE = ChatPromptTemplate.from_messages(
 
 
 class Prompts:
-    brainstorm = BRAINSTORM_TEMPLATE
-    brainstorm_choose = BRAINSTORM_CHOOSE_TEMPLATE
-    outline = OUTLINE_TEMPLATE
-    notes = NOTES_TEMPLATE
-    write = WRITE_TEMPLATE
-    whole_write = WHOLE_WRITE_TEMPLATE
-    feedback = FEEDBACK_TEMPLATE
-    revise = REVISE_TEMPLATE
-    transition = TRANSITION_TEMPLATE
-    video_title = VIDEO_TITLE_TEMPLATE
-    video_description = VIDEO_DESCRIPTION_TEMPLATE
-    footage = FOOTAGE_TEMPLATE
+    brainstorm = BRAINSTORM
+    brainstorm_choose = BRAINSTORM_CHOOSE
+    outline = OUTLINE
+    notes = NOTES
+    write = WRITE
+    feedback = FEEDBACK
+    revise = REVISE
+    transition = TRANSITION
+    images = IMAGES
+    video_title = VIDEO_TITLE
+    video_description = VIDEO_DESCRIPTION
+    footage = FOOTAGE

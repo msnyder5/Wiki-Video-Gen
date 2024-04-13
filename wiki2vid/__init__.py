@@ -1,32 +1,27 @@
+from typing import Optional
+
 from wiki2vid.audio import AudioBuilder
-from wiki2vid.script2 import ScriptBuilder
-from wiki2vid.segment import Content
+from wiki2vid.config import Config
+from wiki2vid.script import ScriptBuilder
+from wiki2vid.segment import Content, SegmentNode
 from wiki2vid.seo import SEOBuilder
 from wiki2vid.video import VideoBuilder
+from wiki2vid.wiki import Wiki
 
 
 class Wiki2Vid:
     def __init__(self, wiki_url: str = ""):
-        self.content = Content(wiki_url)
+        self.base_folder = f"{Config.folder}/{wiki_url.split('/')[-1]}"
+        self.wiki_url = wiki_url
+
+        # Builders
+        self.script_builder = ScriptBuilder(self)
+        self.seo_builder = SEOBuilder(self)
+        self.audio_builder = AudioBuilder(self)
+        self.video_builder = VideoBuilder(self)
 
     def run(self) -> None:
-        self.build_script()
-        self.build_seo()
-        self.build_audio()
-        # self.build_video()
-
-    def build_script(self) -> None:
-        script_builder = ScriptBuilder(self.content)
-        script_builder.create_script()
-
-    def build_seo(self) -> None:
-        seo_builder = SEOBuilder(self.content)
-        seo_builder.build_seo()
-
-    def build_audio(self) -> None:
-        audio_builder = AudioBuilder(self.content)
-        audio_builder.build_audio()
-
-    def build_video(self) -> None:
-        video_builder = VideoBuilder(self.content)
-        video_builder.build_video()
+        self.script_builder.build_script()
+        self.seo_builder.build_seo()
+        self.audio_builder.build_audio()
+        self.video_builder.build_video()
