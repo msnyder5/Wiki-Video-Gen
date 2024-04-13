@@ -317,7 +317,7 @@ class GoogleImageScraper:
         print("[INFO] Google search ended")
         return image_urls
 
-    def save_images(self, image_urls, keep_filenames) -> Optional[Image]:
+    def save_images(self, image_urls, keep_filenames) -> Optional[Image.Image]:
         print(keep_filenames)
         # save images into file directory
         """
